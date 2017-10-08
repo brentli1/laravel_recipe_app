@@ -4,6 +4,11 @@ namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
 
+/**
+ * Home Controller
+ * 
+ * PHP version 7.1.9
+ */
 class HomeController extends Controller
 {
     /**
