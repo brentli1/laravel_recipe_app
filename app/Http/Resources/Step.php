@@ -4,7 +4,7 @@ namespace App\Http\Resources;
 
 use Illuminate\Http\Resources\Json\Resource;
 
-class Category extends Resource
+class Step extends Resource
 {
     /**
      * Transform the resource into an array.
@@ -16,8 +16,9 @@ class Category extends Resource
     {
         return [
             'id' => $this->id,
-            'name' => $this->name,
-            'text' => $this->name
+            'body' => $this->body,
+            'image' => $this->image,
+            'order' => $this->order
         ];
     }
 }

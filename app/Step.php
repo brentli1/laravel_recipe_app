@@ -27,7 +27,7 @@ class Step extends Model
      * 
      * @return array
      */
-    public function images() {
+    public function image() {
         return $this->morphToMany('App\Image', 'imageable');
     }
 }

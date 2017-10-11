@@ -2,7 +2,7 @@
     <v-layout>
         <v-flex xs12 sm10 offset-sm1>
             <v-card>
-                <v-card-media v-if="recipe.image" :src="imageUrl" height="400px"></v-card-media>
+                <v-card-media v-if="recipe.image && recipe.image.length" :src="imageUrl" height="400px"></v-card-media>
                 <v-card-title>
                     <div class="headline grey--text">{{ recipe.title }}</div>
                 </v-card-title>

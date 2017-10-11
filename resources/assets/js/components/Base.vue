@@ -16,7 +16,7 @@
                         <v-list-tile-title>My Recipes</v-list-tile-title>
                     </v-list-tile-content>
                 </v-list-tile>
-                <v-list-tile @click="navigateTo('/recipe/new')">
+                <v-list-tile @click="navigateTo('/recipe/redirect')">
                     <v-list-tile-action>
                         <v-icon>add_box</v-icon>
                     </v-list-tile-action>

@@ -15,11 +15,13 @@ const mutations = {
 };
 
 const actions = {
-    fetchCategories: ({ commit }) => {
-        axios.get(`/api/categories`)
-            .then(({ data }) => {
-                commit('setCategories', data);
-            });
+    fetchCategories: ({ commit, state }) => {
+        if (!state.categories.length) {
+            axios.get(`/api/categories`)
+                .then(({ data }) => {
+                    commit('setCategories', data.data);
+                });
+        }
     }
 };
 

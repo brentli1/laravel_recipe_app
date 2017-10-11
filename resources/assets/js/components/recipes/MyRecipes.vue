@@ -25,7 +25,6 @@
     export default {
         created() {
             this.$store.dispatch('fetchRecipes');
-            this.$store.commit('resetActiveRecipe');
         },
         computed: {
             ...mapGetters([

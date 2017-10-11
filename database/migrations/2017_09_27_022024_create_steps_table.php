@@ -17,6 +17,7 @@ class CreateStepsTable extends Migration
             $table->increments('id');
             $table->integer('recipe_id');
             $table->text('body');
+            $table->integer('order');
             $table->timestamps();
         });
     }

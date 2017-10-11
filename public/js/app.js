@@ -380,13 +380,14 @@ module.exports = {
 "use strict";
 Object.defineProperty(__webpack_exports__, "__esModule", { value: true });
 /* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "Store", function() { return Store; });
+/* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "install", function() { return install; });
 /* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "mapState", function() { return mapState; });
 /* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "mapMutations", function() { return mapMutations; });
 /* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "mapGetters", function() { return mapGetters; });
 /* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "mapActions", function() { return mapActions; });
 /* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "createNamespacedHelpers", function() { return createNamespacedHelpers; });
 /**
- * vuex v2.4.0
+ * vuex v2.4.1
  * (c) 2017 Evan You
  * @license MIT
  */
@@ -492,7 +493,7 @@ var Module = function Module (rawModule, runtime) {
   this.state = (typeof rawState === 'function' ? rawState() : rawState) || {};
 };
 
-var prototypeAccessors$1 = { namespaced: {} };
+var prototypeAccessors$1 = { namespaced: { configurable: true } };
 
 prototypeAccessors$1.namespaced.get = function () {
   return !!this._rawModule.namespaced
@@ -660,6 +661,13 @@ var Store = function Store (options) {
   var this$1 = this;
   if ( options === void 0 ) options = {};
 
+  // Auto install if it is not done yet and `window` has `Vue`.
+  // To allow users to avoid auto-installation in some cases,
+  // this code should be placed here. See #731
+  if (!Vue && typeof window !== 'undefined' && window.Vue) {
+    install(window.Vue);
+  }
+
   if (true) {
     assert(Vue, "must call Vue.use(Vuex) before creating a store instance.");
     assert(typeof Promise !== 'undefined', "vuex requires a Promise polyfill in this browser.");
@@ -716,7 +724,7 @@ var Store = function Store (options) {
   }
 };
 
-var prototypeAccessors = { state: {} };
+var prototypeAccessors = { state: { configurable: true } };
 
 prototypeAccessors.state.get = function () {
   return this._vm._data.$$state
@@ -1114,7 +1122,7 @@ function unifyObjectStyle (type, payload, options) {
 }
 
 function install (_Vue) {
-  if (Vue) {
+  if (Vue && _Vue === Vue) {
     if (true) {
       console.error(
         '[vuex] already installed. Vue.use(Vuex) should be called only once.'
@@ -1124,11 +1132,6 @@ function install (_Vue) {
   }
   Vue = _Vue;
   applyMixin(Vue);
-}
-
-// auto install in dist mode
-if (typeof window !== 'undefined' && window.Vue) {
-  install(window.Vue);
 }
 
 var mapState = normalizeNamespace(function (namespace, states) {
@@ -1164,15 +1167,21 @@ var mapMutations = normalizeNamespace(function (namespace, mutations) {
     var key = ref.key;
     var val = ref.val;
 
-    val = namespace + val;
     res[key] = function mappedMutation () {
       var args = [], len = arguments.length;
       while ( len-- ) args[ len ] = arguments[ len ];
 
-      if (namespace && !getModuleByNamespace(this.$store, 'mapMutations', namespace)) {
-        return
+      var commit = this.$store.commit;
+      if (namespace) {
+        var module = getModuleByNamespace(this.$store, 'mapMutations', namespace);
+        if (!module) {
+          return
+        }
+        commit = module.context.commit;
       }
-      return this.$store.commit.apply(this.$store, [val].concat(args))
+      return typeof val === 'function'
+        ? val.apply(this, [commit].concat(args))
+        : commit.apply(this.$store, [val].concat(args))
     };
   });
   return res
@@ -1207,15 +1216,21 @@ var mapActions = normalizeNamespace(function (namespace, actions) {
     var key = ref.key;
     var val = ref.val;
 
-    val = namespace + val;
     res[key] = function mappedAction () {
       var args = [], len = arguments.length;
       while ( len-- ) args[ len ] = arguments[ len ];
 
-      if (namespace && !getModuleByNamespace(this.$store, 'mapActions', namespace)) {
-        return
+      var dispatch = this.$store.dispatch;
+      if (namespace) {
+        var module = getModuleByNamespace(this.$store, 'mapActions', namespace);
+        if (!module) {
+          return
+        }
+        dispatch = module.context.dispatch;
       }
-      return this.$store.dispatch.apply(this.$store, [val].concat(args))
+      return typeof val === 'function'
+        ? val.apply(this, [dispatch].concat(args))
+        : dispatch.apply(this.$store, [val].concat(args))
     };
   });
   return res
@@ -1257,13 +1272,14 @@ function getModuleByNamespace (store, helper, namespace) {
 var index_esm = {
   Store: Store,
   install: install,
-  version: '2.4.0',
+  version: '2.4.1',
   mapState: mapState,
   mapMutations: mapMutations,
   mapGetters: mapGetters,
   mapActions: mapActions,
   createNamespacedHelpers: createNamespacedHelpers
 };
+
 
 /* harmony default export */ __webpack_exports__["default"] = (index_esm);
 
@@ -13493,7 +13509,7 @@ var __WEBPACK_AMD_DEFINE_ARRAY__, __WEBPACK_AMD_DEFINE_RESULT__;//     Underscor
 /***/ (function(module, exports, __webpack_require__) {
 
 __webpack_require__(12);
-module.exports = __webpack_require__(55);
+module.exports = __webpack_require__(60);
 
 
 /***/ }),
@@ -13523,25 +13539,29 @@ var _vuetify2 = _interopRequireDefault(_vuetify);
 
 var _store = __webpack_require__(37);
 
-var _Base = __webpack_require__(40);
+var _Base = __webpack_require__(42);
 
 var _Base2 = _interopRequireDefault(_Base);
 
-var _MyRecipes = __webpack_require__(43);
+var _MyRecipes = __webpack_require__(45);
 
 var _MyRecipes2 = _interopRequireDefault(_MyRecipes);
 
-var _NewRecipe = __webpack_require__(46);
+var _AddEditRecipe = __webpack_require__(48);
 
-var _NewRecipe2 = _interopRequireDefault(_NewRecipe);
+var _AddEditRecipe2 = _interopRequireDefault(_AddEditRecipe);
 
-var _EditRecipe = __webpack_require__(49);
-
-var _EditRecipe2 = _interopRequireDefault(_EditRecipe);
-
-var _ViewRecipe = __webpack_require__(52);
+var _ViewRecipe = __webpack_require__(51);
 
 var _ViewRecipe2 = _interopRequireDefault(_ViewRecipe);
+
+var _RedirectToForm = __webpack_require__(54);
+
+var _RedirectToForm2 = _interopRequireDefault(_RedirectToForm);
+
+var _StepsList = __webpack_require__(57);
+
+var _StepsList2 = _interopRequireDefault(_StepsList);
 
 function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
 
@@ -13549,19 +13569,21 @@ _vue2.default.use(_vuex2.default);
 _vue2.default.use(_vuetify2.default);
 _vue2.default.use(_vueRouter2.default);
 
-var routes = [{ path: '/', component: _MyRecipes2.default }, { path: '/recipe/new', component: _NewRecipe2.default }, { path: '/recipe/edit/:id', component: _EditRecipe2.default, props: true, name: 'recipeEdit' }, { path: '/recipe/view/:id', component: _ViewRecipe2.default, props: true, name: 'recipeView' }];
+_vue2.default.component('steps-list', _StepsList2.default);
+
+var routes = [{ path: '/', component: _MyRecipes2.default }, { path: '/recipe/redirect', component: _RedirectToForm2.default }, { path: '/recipe/new', component: _AddEditRecipe2.default, props: true }, { path: '/recipe/edit/:id', component: _AddEditRecipe2.default, props: true, name: 'recipeEdit' }, { path: '/recipe/view/:id', component: _ViewRecipe2.default, props: true, name: 'recipeView' }];
 
 var router = new _vueRouter2.default({
-  routes: routes
+    routes: routes
 });
 
 new _vue2.default({
-  el: '#app',
-  router: router,
-  store: _store.store,
-  render: function render(h) {
-    return h(_Base2.default);
-  }
+    el: '#app',
+    router: router,
+    store: _store.store,
+    render: function render(h) {
+        return h(_Base2.default);
+    }
 });
 
 /***/ }),
@@ -32488,9 +32510,13 @@ var _recipe = __webpack_require__(39);
 
 var _recipe2 = _interopRequireDefault(_recipe);
 
-var _category = __webpack_require__(61);
+var _category = __webpack_require__(40);
 
 var _category2 = _interopRequireDefault(_category);
+
+var _step = __webpack_require__(41);
+
+var _step2 = _interopRequireDefault(_step);
 
 function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
 
@@ -32500,7 +32526,8 @@ var store = exports.store = new _vuex2.default.Store({
 	modules: {
 		user: _user2.default,
 		recipe: _recipe2.default,
-		category: _category2.default
+		category: _category2.default,
+		step: _step2.default
 	}
 });
 
@@ -32594,15 +32621,36 @@ var mutations = {
 };
 
 var actions = {
+    /**
+     * Add new recipe
+     */
     addRecipe: function addRecipe(_ref, payload) {
         var commit = _ref.commit;
 
-        axios.post('/api/recipe/new', payload).then(function (_ref2) {
-            var data = _ref2.data;
+        return new Promise(function (resolve, reject) {
+            var data = new FormData();
+            data.set('image', payload.image);
+            data.set('title', payload.title);
+            data.set('description', payload.description);
+            data.set('prep_time', payload.prep_time);
+            data.set('cook_time', payload.cook_time);
+            data.set('categories', JSON.stringify(payload.categories));
 
-            commit('addRecipe', data.data);
+            axios.post('/api/recipe/new', data).then(function (_ref2) {
+                var data = _ref2.data;
+
+                commit('addRecipe', data.data);
+                commit('setActiveRecipe', data.data);
+                resolve(data.data);
+            });
         });
     },
+    /**
+     * Fetch the recipes collection
+     * 
+     * If recipes have already been fetched, don't perform
+     * this action.
+     */
     fetchRecipes: function fetchRecipes(_ref3) {
         var commit = _ref3.commit,
             state = _ref3.state;
@@ -32618,22 +32666,34 @@ var actions = {
             });
         }
     },
+    /**
+     * Get the active recipe
+     * 
+     * If recipes has already been fetch, look through collection
+     * for desired recipe to show.  If no recipes have been fetched,
+     * hit the database to retrieve the recipe.
+     */
     getActiveRecipe: function getActiveRecipe(_ref5, payload) {
         var commit = _ref5.commit,
             state = _ref5.state;
 
         if (state.recipe.id !== Number.parseInt(payload)) {
             return new Promise(function (resolve, reject) {
-                axios.get('/api/recipe/' + payload).then(function (_ref6) {
-                    var data = _ref6.data;
+                if (state.recipes.length) {
+                    commit('setActiveRecipe', (0, _underscore.findWhere)(state.recipes, { 'id': parseInt(payload) }));
+                    resolve();
+                } else {
+                    axios.get('/api/recipe/' + payload).then(function (_ref6) {
+                        var data = _ref6.data;
 
-                    if (data.data == undefined) {
-                        resolve();
-                    }
+                        if (data.data == undefined) {
+                            resolve();
+                        }
 
-                    commit('setActiveRecipe', data.data);
-                    resolve(data.data);
-                });
+                        commit('setActiveRecipe', data.data);
+                        resolve(data.data);
+                    });
+                }
             });
         } else {
             return new Promise(function (resolve) {
@@ -32641,12 +32701,14 @@ var actions = {
             });
         }
     },
+    /**
+     * Update the active recipe
+     */
     updateActiveRecipe: function updateActiveRecipe(_ref7, payload) {
         var commit = _ref7.commit,
             state = _ref7.state;
 
         return new Promise(function (resolve, reject) {
-
             var data = new FormData();
             data.set('image', payload.image);
             data.set('title', payload.title);
@@ -32654,6 +32716,7 @@ var actions = {
             data.set('prep_time', payload.prep_time);
             data.set('cook_time', payload.cook_time);
             data.set('id', payload.id);
+            data.set('categories', JSON.stringify(payload.categories));
 
             axios.post('/api/recipe/edit/' + payload.id, data).then(function (_ref8) {
                 var data = _ref8.data;
@@ -32662,9 +32725,32 @@ var actions = {
 
                 // Manually update recipes collection
                 (0, _underscore.extend)((0, _underscore.findWhere)(state.recipes, { 'id': data.data.id }), data.data);
-
                 resolve(data.data);
             });
+        });
+    },
+    /**
+     * Reset the active recipe to an empty array. This is needed for 
+     * when visiting the create new recipe route.
+     */
+    resetActiveRecipe: function resetActiveRecipe(_ref9) {
+        var commit = _ref9.commit;
+
+        commit('setActiveRecipe', []);
+    },
+
+    /**
+     * Update a recipe within the recipes collection and active recipe
+     */
+    syncActiveRecipeChanges: function syncActiveRecipeChanges(_ref10, payload) {
+        var commit = _ref10.commit,
+            state = _ref10.state;
+
+        return new Promise(function (resolve, reject) {
+            (0, _underscore.extend)((0, _underscore.findWhere)(state.recipes, { 'id': payload.id }), payload);
+
+            commit('setActiveRecipe', payload);
+            resolve();
         });
     }
 };
@@ -32680,12 +32766,102 @@ exports.default = {
 /* 40 */
 /***/ (function(module, exports, __webpack_require__) {
 
+"use strict";
+
+
+Object.defineProperty(exports, "__esModule", {
+    value: true
+});
+var state = {
+    categories: []
+};
+
+var getters = {
+    categories: function categories(state) {
+        return state.categories;
+    }
+};
+
+var mutations = {
+    setCategories: function setCategories(state, payload) {
+        state.categories = payload;
+    }
+};
+
+var actions = {
+    fetchCategories: function fetchCategories(_ref) {
+        var commit = _ref.commit,
+            state = _ref.state;
+
+        if (!state.categories.length) {
+            axios.get('/api/categories').then(function (_ref2) {
+                var data = _ref2.data;
+
+                commit('setCategories', data.data);
+            });
+        }
+    }
+};
+
+exports.default = {
+    state: state,
+    getters: getters,
+    mutations: mutations,
+    actions: actions
+};
+
+/***/ }),
+/* 41 */
+/***/ (function(module, exports, __webpack_require__) {
+
+"use strict";
+
+
+Object.defineProperty(exports, "__esModule", {
+    value: true
+});
+var state = {};
+
+var getters = {};
+
+var mutations = {};
+
+var actions = {
+    createStep: function createStep(_ref, payload) {
+        var commit = _ref.commit,
+            state = _ref.state;
+
+        return new Promise(function (resolve, reject) {
+            var data = new FormData();
+            data.set('body', payload.body);
+            data.set('image', payload.image);
+
+            axios.post('/api/steps/new/' + payload.id, data).then(function (_ref2) {
+                var data = _ref2.data;
+
+                resolve(data.data);
+            });
+        });
+    }
+};
+
+exports.default = {
+    state: state,
+    getters: getters,
+    mutations: mutations,
+    actions: actions
+};
+
+/***/ }),
+/* 42 */
+/***/ (function(module, exports, __webpack_require__) {
+
 var disposed = false
 var normalizeComponent = __webpack_require__(2)
 /* script */
-var __vue_script__ = __webpack_require__(41)
+var __vue_script__ = __webpack_require__(43)
 /* template */
-var __vue_template__ = __webpack_require__(42)
+var __vue_template__ = __webpack_require__(44)
 /* styles */
 var __vue_styles__ = null
 /* scopeId */
@@ -32723,7 +32899,7 @@ module.exports = Component.exports
 
 
 /***/ }),
-/* 41 */
+/* 43 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -32820,7 +32996,7 @@ exports.default = {
 };
 
 /***/ }),
-/* 42 */
+/* 44 */
 /***/ (function(module, exports, __webpack_require__) {
 
 var render = function() {
@@ -32883,7 +33059,7 @@ var render = function() {
                 {
                   on: {
                     click: function($event) {
-                      _vm.navigateTo("/recipe/new")
+                      _vm.navigateTo("/recipe/redirect")
                     }
                   }
                 },
@@ -33033,15 +33209,15 @@ if (false) {
 }
 
 /***/ }),
-/* 43 */
+/* 45 */
 /***/ (function(module, exports, __webpack_require__) {
 
 var disposed = false
 var normalizeComponent = __webpack_require__(2)
 /* script */
-var __vue_script__ = __webpack_require__(44)
+var __vue_script__ = __webpack_require__(46)
 /* template */
-var __vue_template__ = __webpack_require__(45)
+var __vue_template__ = __webpack_require__(47)
 /* styles */
 var __vue_styles__ = null
 /* scopeId */
@@ -33079,7 +33255,7 @@ module.exports = Component.exports
 
 
 /***/ }),
-/* 44 */
+/* 46 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -33117,7 +33293,6 @@ var _vuex = __webpack_require__(1);
 exports.default = {
     created: function created() {
         this.$store.dispatch('fetchRecipes');
-        this.$store.commit('resetActiveRecipe');
     },
 
     computed: _extends({}, (0, _vuex.mapGetters)(['recipes'])),
@@ -33132,7 +33307,7 @@ exports.default = {
 };
 
 /***/ }),
-/* 45 */
+/* 47 */
 /***/ (function(module, exports, __webpack_require__) {
 
 var render = function() {
@@ -33237,317 +33412,15 @@ if (false) {
 }
 
 /***/ }),
-/* 46 */
-/***/ (function(module, exports, __webpack_require__) {
-
-var disposed = false
-var normalizeComponent = __webpack_require__(2)
-/* script */
-var __vue_script__ = __webpack_require__(47)
-/* template */
-var __vue_template__ = __webpack_require__(48)
-/* styles */
-var __vue_styles__ = null
-/* scopeId */
-var __vue_scopeId__ = null
-/* moduleIdentifier (server only) */
-var __vue_module_identifier__ = null
-var Component = normalizeComponent(
-  __vue_script__,
-  __vue_template__,
-  __vue_styles__,
-  __vue_scopeId__,
-  __vue_module_identifier__
-)
-Component.options.__file = "resources/assets/js/components/recipes/NewRecipe.vue"
-if (Component.esModule && Object.keys(Component.esModule).some(function (key) {return key !== "default" && key.substr(0, 2) !== "__"})) {console.error("named exports are not supported in *.vue files.")}
-if (Component.options.functional) {console.error("[vue-loader] NewRecipe.vue: functional components are not supported with templates, they should use render functions.")}
-
-/* hot reload */
-if (false) {(function () {
-  var hotAPI = require("vue-hot-reload-api")
-  hotAPI.install(require("vue"), false)
-  if (!hotAPI.compatible) return
-  module.hot.accept()
-  if (!module.hot.data) {
-    hotAPI.createRecord("data-v-45b31a1e", Component.options)
-  } else {
-    hotAPI.reload("data-v-45b31a1e", Component.options)
-  }
-  module.hot.dispose(function (data) {
-    disposed = true
-  })
-})()}
-
-module.exports = Component.exports
-
-
-/***/ }),
-/* 47 */
-/***/ (function(module, exports, __webpack_require__) {
-
-"use strict";
-
-
-Object.defineProperty(exports, "__esModule", {
-    value: true
-});
-
-var _extends = Object.assign || function (target) { for (var i = 1; i < arguments.length; i++) { var source = arguments[i]; for (var key in source) { if (Object.prototype.hasOwnProperty.call(source, key)) { target[key] = source[key]; } } } return target; }; //
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-//
-
-var _vuex = __webpack_require__(1);
-
-exports.default = {
-    data: function data() {
-        return {
-            recipe: {
-                title: '',
-                description: '',
-                prep_time: '',
-                cook_time: '',
-                categories: []
-            },
-            valid: false,
-            titleRules: [function (v) {
-                return !!v || 'Title is required';
-            }],
-            descriptionRules: [function (v) {
-                return !!v || 'Description is required';
-            }],
-            timeRules: [function (v) {
-                return !!v || 'Time is required';
-            }]
-        };
-    },
-    created: function created() {
-        this.fetchCategories();
-    },
-
-    methods: _extends({}, (0, _vuex.mapActions)(['fetchCategories']), {
-        submit: function submit() {
-            var _this = this;
-
-            this.$store.dispatch('addRecipe', this.recipe).then(function () {
-                _this.$router.push('/');
-            });
-        }
-    }),
-    computed: _extends({}, (0, _vuex.mapGetters)(['categories']))
-};
-
-/***/ }),
 /* 48 */
 /***/ (function(module, exports, __webpack_require__) {
 
-var render = function() {
-  var _vm = this
-  var _h = _vm.$createElement
-  var _c = _vm._self._c || _h
-  return _c(
-    "v-layout",
-    [
-      _c(
-        "v-flex",
-        { attrs: { xs12: "", sm10: "", "offset-sm1": "" } },
-        [
-          _c("div", { staticClass: "headline grey--text text--darken-1" }, [
-            _vm._v("Add New Recipe")
-          ]),
-          _vm._v(" "),
-          _c(
-            "v-form",
-            {
-              ref: "form",
-              attrs: { xs10: "" },
-              model: {
-                value: _vm.valid,
-                callback: function($$v) {
-                  _vm.valid = $$v
-                },
-                expression: "valid"
-              }
-            },
-            [
-              _c("v-text-field", {
-                attrs: {
-                  label: "Title",
-                  box: "",
-                  rules: _vm.titleRules,
-                  required: ""
-                },
-                model: {
-                  value: _vm.recipe.title,
-                  callback: function($$v) {
-                    _vm.recipe.title = $$v
-                  },
-                  expression: "recipe.title"
-                }
-              }),
-              _vm._v(" "),
-              _c("v-text-field", {
-                attrs: {
-                  label: "Description",
-                  box: "",
-                  "multi-line": "",
-                  rules: _vm.descriptionRules,
-                  required: ""
-                },
-                model: {
-                  value: _vm.recipe.description,
-                  callback: function($$v) {
-                    _vm.recipe.description = $$v
-                  },
-                  expression: "recipe.description"
-                }
-              }),
-              _vm._v(" "),
-              _c("v-text-field", {
-                attrs: {
-                  label: "Prep Time (mins)",
-                  box: "",
-                  type: "number",
-                  rules: _vm.timeRules,
-                  required: ""
-                },
-                model: {
-                  value: _vm.recipe.prep_time,
-                  callback: function($$v) {
-                    _vm.recipe.prep_time = $$v
-                  },
-                  expression: "recipe.prep_time"
-                }
-              }),
-              _vm._v(" "),
-              _c("v-text-field", {
-                attrs: {
-                  label: "Cook Time (mins)",
-                  box: "",
-                  type: "number",
-                  rules: _vm.timeRules,
-                  required: ""
-                },
-                model: {
-                  value: _vm.recipe.cook_time,
-                  callback: function($$v) {
-                    _vm.recipe.cook_time = $$v
-                  },
-                  expression: "recipe.cook_time"
-                }
-              }),
-              _vm._v(" "),
-              _c("v-select", {
-                attrs: {
-                  label: "Categories",
-                  chips: "",
-                  tags: "",
-                  items: _vm.categories
-                },
-                model: {
-                  value: _vm.recipe.categories,
-                  callback: function($$v) {
-                    _vm.recipe.categories = $$v
-                  },
-                  expression: "recipe.categories"
-                }
-              }),
-              _vm._v(" "),
-              _c(
-                "v-btn",
-                {
-                  attrs: { outline: "" },
-                  on: {
-                    click: function($event) {
-                      _vm.$router.push("/")
-                    }
-                  }
-                },
-                [_vm._v("cancel")]
-              ),
-              _vm._v(" "),
-              _c(
-                "v-btn",
-                { attrs: { outline: "" }, on: { click: _vm.submit } },
-                [_vm._v("save")]
-              )
-            ],
-            1
-          )
-        ],
-        1
-      )
-    ],
-    1
-  )
-}
-var staticRenderFns = []
-render._withStripped = true
-module.exports = { render: render, staticRenderFns: staticRenderFns }
-if (false) {
-  module.hot.accept()
-  if (module.hot.data) {
-     require("vue-hot-reload-api").rerender("data-v-45b31a1e", module.exports)
-  }
-}
-
-/***/ }),
-/* 49 */
-/***/ (function(module, exports, __webpack_require__) {
-
 var disposed = false
 var normalizeComponent = __webpack_require__(2)
 /* script */
-var __vue_script__ = __webpack_require__(50)
+var __vue_script__ = __webpack_require__(49)
 /* template */
-var __vue_template__ = __webpack_require__(51)
+var __vue_template__ = __webpack_require__(50)
 /* styles */
 var __vue_styles__ = null
 /* scopeId */
@@ -33561,9 +33434,9 @@ var Component = normalizeComponent(
   __vue_scopeId__,
   __vue_module_identifier__
 )
-Component.options.__file = "resources/assets/js/components/recipes/EditRecipe.vue"
+Component.options.__file = "resources/assets/js/components/recipes/AddEditRecipe.vue"
 if (Component.esModule && Object.keys(Component.esModule).some(function (key) {return key !== "default" && key.substr(0, 2) !== "__"})) {console.error("named exports are not supported in *.vue files.")}
-if (Component.options.functional) {console.error("[vue-loader] EditRecipe.vue: functional components are not supported with templates, they should use render functions.")}
+if (Component.options.functional) {console.error("[vue-loader] AddEditRecipe.vue: functional components are not supported with templates, they should use render functions.")}
 
 /* hot reload */
 if (false) {(function () {
@@ -33572,9 +33445,9 @@ if (false) {(function () {
   if (!hotAPI.compatible) return
   module.hot.accept()
   if (!module.hot.data) {
-    hotAPI.createRecord("data-v-27383298", Component.options)
+    hotAPI.createRecord("data-v-54d99d09", Component.options)
   } else {
-    hotAPI.reload("data-v-27383298", Component.options)
+    hotAPI.reload("data-v-54d99d09", Component.options)
   }
   module.hot.dispose(function (data) {
     disposed = true
@@ -33585,7 +33458,7 @@ module.exports = Component.exports
 
 
 /***/ }),
-/* 50 */
+/* 49 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -33596,6 +33469,39 @@ Object.defineProperty(exports, "__esModule", {
 });
 
 var _extends = Object.assign || function (target) { for (var i = 1; i < arguments.length; i++) { var source = arguments[i]; for (var key in source) { if (Object.prototype.hasOwnProperty.call(source, key)) { target[key] = source[key]; } } } return target; }; //
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
 //
 //
 //
@@ -33661,8 +33567,11 @@ exports.default = {
 				description: '',
 				prep_time: '',
 				cook_time: '',
-				image: {}
+				image: {},
+				categories: [],
+				steps: []
 			},
+			dialog: false,
 			valid: false,
 			titleRules: [function (v) {
 				return !!v || 'Title is required';
@@ -33678,41 +33587,76 @@ exports.default = {
 	created: function created() {
 		var _this = this;
 
-		this.getActiveRecipe(this.id).then(function () {
-			if (_this.recipe == undefined) {
-				_this.$router.push('/');
-			}
+		/**
+   * If id prop exists, get active recipe, otherwise
+   * reset active recipe.
+   */
+		if (this.id) {
+			this.getActiveRecipe(this.id).then(function () {
+				if (_this.recipe == undefined) {
+					_this.$router.push('/');
+				}
 
-			_this.editableRecipe = (0, _underscore.clone)(_this.recipe);
-		});
+				_this.editableRecipe = (0, _underscore.clone)(_this.recipe);
+			});
+		} else {
+			this.resetActiveRecipe();
+		}
+
+		/**
+   * Fetch categories for dropdown list.
+   */
+		this.fetchCategories();
 	},
 
 	props: {
 		'id': ''
 	},
-	computed: _extends({}, (0, _vuex.mapGetters)(['recipe']), {
+	computed: _extends({}, (0, _vuex.mapGetters)(['recipe', 'categories']), {
 		recipeImageUrl: function recipeImageUrl() {
 			if (this.recipe.image !== undefined && this.recipe.image.length) {
 				return '' + s3 + this.recipe.image[0].path;
 			}
+		},
+		pageTitle: function pageTitle() {
+			return this.id ? 'Edit Recipe' : 'Add New Recipe';
 		}
 	}),
-	methods: _extends({}, (0, _vuex.mapActions)(['getActiveRecipe', 'updateActiveRecipe']), {
-		updateAndRedirect: function updateAndRedirect() {
+	methods: _extends({}, (0, _vuex.mapActions)(['getActiveRecipe', 'updateActiveRecipe', 'addRecipe', 'fetchCategories', 'resetActiveRecipe']), {
+		/**
+   * Save data and redirect page to recipe view
+   * 
+   * If id prop exists, update the recipe, otherwise save
+   * a new recipe
+   */
+		saveAndRedirect: function saveAndRedirect() {
 			var _this2 = this;
 
-			this.updateActiveRecipe(this.editableRecipe).then(function () {
-				_this2.$router.push('/recipe/view/' + _this2.recipe.id);
-			});
+			if (this.id) {
+				this.updateActiveRecipe(this.editableRecipe).then(function () {
+					_this2.$router.push('/recipe/view/' + _this2.recipe.id);
+				});
+			} else {
+				this.addRecipe(this.editableRecipe).then(function () {
+					_this2.$router.push('/recipe/view/' + _this2.recipe.id);
+				});
+			}
 		},
 		updateImage: function updateImage(evt) {
 			this.editableRecipe.image = evt.target.files[0];
+		},
+		cancelRedirect: function cancelRedirect() {
+			if (this.id) {
+				this.$router.push('/recipe/view/' + this.recipe.id);
+			} else {
+				this.$router.push('/');
+			}
 		}
 	})
 };
 
 /***/ }),
-/* 51 */
+/* 50 */
 /***/ (function(module, exports, __webpack_require__) {
 
 var render = function() {
@@ -33727,7 +33671,7 @@ var render = function() {
         { attrs: { xs12: "", sm10: "", "offset-sm1": "" } },
         [
           _c("div", { staticClass: "headline grey--text text--darken-1" }, [
-            _vm._v("Edit Recipe")
+            _vm._v(_vm._s(_vm.pageTitle))
           ]),
           _vm._v(" "),
           _c(
@@ -33744,119 +33688,272 @@ var render = function() {
               }
             },
             [
-              _c("v-text-field", {
-                attrs: {
-                  label: "Title",
-                  box: "",
-                  rules: _vm.titleRules,
-                  required: ""
-                },
-                model: {
-                  value: _vm.editableRecipe.title,
-                  callback: function($$v) {
-                    _vm.editableRecipe.title = $$v
-                  },
-                  expression: "editableRecipe.title"
-                }
-              }),
-              _vm._v(" "),
-              _c("v-text-field", {
-                attrs: {
-                  label: "Description",
-                  box: "",
-                  "multi-line": "",
-                  rules: _vm.descriptionRules,
-                  required: ""
-                },
-                model: {
-                  value: _vm.editableRecipe.description,
-                  callback: function($$v) {
-                    _vm.editableRecipe.description = $$v
-                  },
-                  expression: "editableRecipe.description"
-                }
-              }),
-              _vm._v(" "),
-              _c("v-text-field", {
-                attrs: {
-                  label: "Prep Time (mins)",
-                  box: "",
-                  type: "number",
-                  rules: _vm.timeRules,
-                  required: ""
-                },
-                model: {
-                  value: _vm.editableRecipe.prep_time,
-                  callback: function($$v) {
-                    _vm.editableRecipe.prep_time = $$v
-                  },
-                  expression: "editableRecipe.prep_time"
-                }
-              }),
-              _vm._v(" "),
-              _c("v-text-field", {
-                attrs: {
-                  label: "Cook Time (mins)",
-                  box: "",
-                  type: "number",
-                  rules: _vm.timeRules,
-                  required: ""
-                },
-                model: {
-                  value: _vm.editableRecipe.cook_time,
-                  callback: function($$v) {
-                    _vm.editableRecipe.cook_time = $$v
-                  },
-                  expression: "editableRecipe.cook_time"
-                }
-              }),
-              _vm._v(" "),
-              _c("div", { staticStyle: { display: "flex" } }, [
-                _vm.recipe.image
-                  ? _c("div", [
-                      _vm._v("\n\t\t\t\t\t\tCurrent image\n\t\t\t\t\t\t"),
-                      _c("img", {
-                        staticStyle: { "max-width": "100%" },
-                        attrs: { src: _vm.recipeImageUrl, alt: "" }
-                      })
-                    ])
-                  : _vm._e(),
-                _vm._v(" "),
-                _c("input", {
-                  staticStyle: { flex: "0 0 80%" },
-                  attrs: { type: "file", name: "image" },
-                  on: { change: _vm.updateImage }
-                })
-              ]),
-              _vm._v(" "),
               _c(
-                "v-btn",
-                {
-                  attrs: { outline: "" },
-                  on: {
-                    click: function($event) {
-                      _vm.$router.push("/recipe/view/" + _vm.recipe.id)
-                    }
-                  }
-                },
-                [_vm._v("cancel")]
-              ),
-              _vm._v(" "),
-              _c(
-                "v-btn",
-                {
-                  attrs: { outline: "" },
-                  on: {
-                    click: function($event) {
-                      _vm.updateAndRedirect()
-                    }
-                  }
-                },
-                [_vm._v("save")]
+                "v-container",
+                { attrs: { "grid-list-md": "" } },
+                [
+                  _c(
+                    "v-layout",
+                    { attrs: { row: "", wrap: "" } },
+                    [
+                      _c(
+                        "v-flex",
+                        { attrs: { xs12: "" } },
+                        [
+                          _c("v-text-field", {
+                            attrs: {
+                              label: "Title",
+                              rules: _vm.titleRules,
+                              required: ""
+                            },
+                            model: {
+                              value: _vm.editableRecipe.title,
+                              callback: function($$v) {
+                                _vm.editableRecipe.title = $$v
+                              },
+                              expression: "editableRecipe.title"
+                            }
+                          })
+                        ],
+                        1
+                      ),
+                      _vm._v(" "),
+                      _c(
+                        "v-flex",
+                        { attrs: { xs12: "" } },
+                        [
+                          _c("v-text-field", {
+                            attrs: {
+                              label: "Description",
+                              "multi-line": "",
+                              rules: _vm.descriptionRules,
+                              required: ""
+                            },
+                            model: {
+                              value: _vm.editableRecipe.description,
+                              callback: function($$v) {
+                                _vm.editableRecipe.description = $$v
+                              },
+                              expression: "editableRecipe.description"
+                            }
+                          })
+                        ],
+                        1
+                      ),
+                      _vm._v(" "),
+                      _c(
+                        "v-flex",
+                        { attrs: { xs12: "", sm6: "" } },
+                        [
+                          _c("v-text-field", {
+                            attrs: {
+                              label: "Prep Time (mins)",
+                              type: "number",
+                              rules: _vm.timeRules,
+                              required: ""
+                            },
+                            model: {
+                              value: _vm.editableRecipe.prep_time,
+                              callback: function($$v) {
+                                _vm.editableRecipe.prep_time = $$v
+                              },
+                              expression: "editableRecipe.prep_time"
+                            }
+                          })
+                        ],
+                        1
+                      ),
+                      _vm._v(" "),
+                      _c(
+                        "v-flex",
+                        { attrs: { xs12: "", sm6: "" } },
+                        [
+                          _c("v-text-field", {
+                            attrs: {
+                              label: "Cook Time (mins)",
+                              type: "number",
+                              rules: _vm.timeRules,
+                              required: ""
+                            },
+                            model: {
+                              value: _vm.editableRecipe.cook_time,
+                              callback: function($$v) {
+                                _vm.editableRecipe.cook_time = $$v
+                              },
+                              expression: "editableRecipe.cook_time"
+                            }
+                          })
+                        ],
+                        1
+                      ),
+                      _vm._v(" "),
+                      _c("v-flex", { attrs: { xs12: "" } }, [
+                        _c("div", { staticStyle: { display: "flex" } }, [
+                          _vm.recipe.image
+                            ? _c("div", [
+                                _vm._v(
+                                  "\n\t\t\t\t\t\t\t\t\tCurrent image\n\t\t\t\t\t\t\t\t\t"
+                                ),
+                                _c("img", {
+                                  staticStyle: { "max-width": "100%" },
+                                  attrs: { src: _vm.recipeImageUrl, alt: "" }
+                                })
+                              ])
+                            : _vm._e(),
+                          _vm._v(" "),
+                          _c("input", {
+                            staticStyle: { flex: "0 0 80%" },
+                            attrs: { type: "file", name: "image" },
+                            on: { change: _vm.updateImage }
+                          })
+                        ])
+                      ]),
+                      _vm._v(" "),
+                      _c(
+                        "v-flex",
+                        { attrs: { xs12: "" } },
+                        [
+                          _c("v-select", {
+                            attrs: {
+                              label: "Categories",
+                              chips: "",
+                              multiple: "",
+                              items: _vm.categories
+                            },
+                            model: {
+                              value: _vm.editableRecipe.categories,
+                              callback: function($$v) {
+                                _vm.editableRecipe.categories = $$v
+                              },
+                              expression: "editableRecipe.categories"
+                            }
+                          })
+                        ],
+                        1
+                      ),
+                      _vm._v(" "),
+                      _c(
+                        "v-btn",
+                        {
+                          attrs: { outline: "" },
+                          on: {
+                            click: function($event) {
+                              _vm.cancelRedirect()
+                            }
+                          }
+                        },
+                        [_vm._v("cancel")]
+                      ),
+                      _vm._v(" "),
+                      _c(
+                        "v-btn",
+                        {
+                          attrs: { outline: "" },
+                          on: {
+                            click: function($event) {
+                              _vm.saveAndRedirect()
+                            }
+                          }
+                        },
+                        [_vm._v("save")]
+                      )
+                    ],
+                    1
+                  )
+                ],
+                1
               )
             ],
             1
-          )
+          ),
+          _vm._v(" "),
+          _vm.editableRecipe.id
+            ? _c(
+                "v-dialog",
+                {
+                  attrs: {
+                    fullscreen: "",
+                    transition: "dialog-bottom-transition",
+                    overlay: false
+                  },
+                  model: {
+                    value: _vm.dialog,
+                    callback: function($$v) {
+                      _vm.dialog = $$v
+                    },
+                    expression: "dialog"
+                  }
+                },
+                [
+                  _c(
+                    "v-btn",
+                    {
+                      attrs: { slot: "activator", color: "primary", dark: "" },
+                      slot: "activator"
+                    },
+                    [_vm._v("Edit Recipe Steps")]
+                  ),
+                  _vm._v(" "),
+                  _c(
+                    "v-card",
+                    [
+                      _c(
+                        "v-toolbar",
+                        { attrs: { dark: "", color: "primary" } },
+                        [
+                          _c(
+                            "v-btn",
+                            {
+                              attrs: { icon: "", dark: "" },
+                              nativeOn: {
+                                click: function($event) {
+                                  _vm.dialog = false
+                                }
+                              }
+                            },
+                            [_c("v-icon", [_vm._v("close")])],
+                            1
+                          ),
+                          _vm._v(" "),
+                          _c("v-toolbar-title", [_vm._v("Edit Recipe Steps")]),
+                          _vm._v(" "),
+                          _c("v-spacer"),
+                          _vm._v(" "),
+                          _c(
+                            "v-toolbar-items",
+                            [
+                              _c(
+                                "v-btn",
+                                {
+                                  attrs: { dark: "", flat: "" },
+                                  nativeOn: {
+                                    click: function($event) {
+                                      _vm.dialog = false
+                                    }
+                                  }
+                                },
+                                [_vm._v("Save")]
+                              )
+                            ],
+                            1
+                          )
+                        ],
+                        1
+                      ),
+                      _vm._v(" "),
+                      _c("steps-list", {
+                        attrs: {
+                          recipeId: _vm.recipe.id,
+                          steps: _vm.recipe.steps
+                        }
+                      })
+                    ],
+                    1
+                  )
+                ],
+                1
+              )
+            : _vm._e()
         ],
         1
       )
@@ -33870,20 +33967,20 @@ module.exports = { render: render, staticRenderFns: staticRenderFns }
 if (false) {
   module.hot.accept()
   if (module.hot.data) {
-     require("vue-hot-reload-api").rerender("data-v-27383298", module.exports)
+     require("vue-hot-reload-api").rerender("data-v-54d99d09", module.exports)
   }
 }
 
 /***/ }),
-/* 52 */
+/* 51 */
 /***/ (function(module, exports, __webpack_require__) {
 
 var disposed = false
 var normalizeComponent = __webpack_require__(2)
 /* script */
-var __vue_script__ = __webpack_require__(53)
+var __vue_script__ = __webpack_require__(52)
 /* template */
-var __vue_template__ = __webpack_require__(54)
+var __vue_template__ = __webpack_require__(53)
 /* styles */
 var __vue_styles__ = null
 /* scopeId */
@@ -33921,7 +34018,7 @@ module.exports = Component.exports
 
 
 /***/ }),
-/* 53 */
+/* 52 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -33982,7 +34079,7 @@ exports.default = {
 };
 
 /***/ }),
-/* 54 */
+/* 53 */
 /***/ (function(module, exports, __webpack_require__) {
 
 var render = function() {
@@ -33999,7 +34096,7 @@ var render = function() {
           _c(
             "v-card",
             [
-              _vm.recipe.image
+              _vm.recipe.image && _vm.recipe.image.length
                 ? _c("v-card-media", {
                     attrs: { src: _vm.imageUrl, height: "400px" }
                   })
@@ -34079,18 +34176,53 @@ if (false) {
 }
 
 /***/ }),
-/* 55 */
-/***/ (function(module, exports) {
+/* 54 */
+/***/ (function(module, exports, __webpack_require__) {
 
-// removed by extract-text-webpack-plugin
+var disposed = false
+var normalizeComponent = __webpack_require__(2)
+/* script */
+var __vue_script__ = __webpack_require__(55)
+/* template */
+var __vue_template__ = __webpack_require__(56)
+/* styles */
+var __vue_styles__ = null
+/* scopeId */
+var __vue_scopeId__ = null
+/* moduleIdentifier (server only) */
+var __vue_module_identifier__ = null
+var Component = normalizeComponent(
+  __vue_script__,
+  __vue_template__,
+  __vue_styles__,
+  __vue_scopeId__,
+  __vue_module_identifier__
+)
+Component.options.__file = "resources/assets/js/components/recipes/RedirectToForm.vue"
+if (Component.esModule && Object.keys(Component.esModule).some(function (key) {return key !== "default" && key.substr(0, 2) !== "__"})) {console.error("named exports are not supported in *.vue files.")}
+if (Component.options.functional) {console.error("[vue-loader] RedirectToForm.vue: functional components are not supported with templates, they should use render functions.")}
+
+/* hot reload */
+if (false) {(function () {
+  var hotAPI = require("vue-hot-reload-api")
+  hotAPI.install(require("vue"), false)
+  if (!hotAPI.compatible) return
+  module.hot.accept()
+  if (!module.hot.data) {
+    hotAPI.createRecord("data-v-d33a248a", Component.options)
+  } else {
+    hotAPI.reload("data-v-d33a248a", Component.options)
+  }
+  module.hot.dispose(function (data) {
+    disposed = true
+  })
+})()}
+
+module.exports = Component.exports
+
 
 /***/ }),
-/* 56 */,
-/* 57 */,
-/* 58 */,
-/* 59 */,
-/* 60 */,
-/* 61 */
+/* 55 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -34099,40 +34231,352 @@ if (false) {
 Object.defineProperty(exports, "__esModule", {
     value: true
 });
-var state = {
-    categories: []
-};
+//
+//
+//
+//
 
-var getters = {
-    categories: function categories(state) {
-        return state.categories;
+// This is needed temporarily to force rerender of form when
+// navigating from edit to add new recipe. 
+exports.default = {
+    created: function created() {
+        this.$router.push('/recipe/new');
     }
 };
 
-var mutations = {
-    setCategories: function setCategories(state, payload) {
-        state.categories = payload;
-    }
-};
+/***/ }),
+/* 56 */
+/***/ (function(module, exports, __webpack_require__) {
 
-var actions = {
-    fetchCategories: function fetchCategories(_ref) {
-        var commit = _ref.commit;
+var render = function() {
+  var _vm = this
+  var _h = _vm.$createElement
+  var _c = _vm._self._c || _h
+  return _c("div")
+}
+var staticRenderFns = []
+render._withStripped = true
+module.exports = { render: render, staticRenderFns: staticRenderFns }
+if (false) {
+  module.hot.accept()
+  if (module.hot.data) {
+     require("vue-hot-reload-api").rerender("data-v-d33a248a", module.exports)
+  }
+}
 
-        axios.get('/api/categories').then(function (_ref2) {
-            var data = _ref2.data;
+/***/ }),
+/* 57 */
+/***/ (function(module, exports, __webpack_require__) {
 
-            commit('setCategories', data);
-        });
-    }
-};
+var disposed = false
+var normalizeComponent = __webpack_require__(2)
+/* script */
+var __vue_script__ = __webpack_require__(58)
+/* template */
+var __vue_template__ = __webpack_require__(59)
+/* styles */
+var __vue_styles__ = null
+/* scopeId */
+var __vue_scopeId__ = null
+/* moduleIdentifier (server only) */
+var __vue_module_identifier__ = null
+var Component = normalizeComponent(
+  __vue_script__,
+  __vue_template__,
+  __vue_styles__,
+  __vue_scopeId__,
+  __vue_module_identifier__
+)
+Component.options.__file = "resources/assets/js/components/steps/StepsList.vue"
+if (Component.esModule && Object.keys(Component.esModule).some(function (key) {return key !== "default" && key.substr(0, 2) !== "__"})) {console.error("named exports are not supported in *.vue files.")}
+if (Component.options.functional) {console.error("[vue-loader] StepsList.vue: functional components are not supported with templates, they should use render functions.")}
+
+/* hot reload */
+if (false) {(function () {
+  var hotAPI = require("vue-hot-reload-api")
+  hotAPI.install(require("vue"), false)
+  if (!hotAPI.compatible) return
+  module.hot.accept()
+  if (!module.hot.data) {
+    hotAPI.createRecord("data-v-69e53992", Component.options)
+  } else {
+    hotAPI.reload("data-v-69e53992", Component.options)
+  }
+  module.hot.dispose(function (data) {
+    disposed = true
+  })
+})()}
+
+module.exports = Component.exports
+
+
+/***/ }),
+/* 58 */
+/***/ (function(module, exports, __webpack_require__) {
+
+"use strict";
+
+
+Object.defineProperty(exports, "__esModule", {
+    value: true
+});
+
+var _extends = Object.assign || function (target) { for (var i = 1; i < arguments.length; i++) { var source = arguments[i]; for (var key in source) { if (Object.prototype.hasOwnProperty.call(source, key)) { target[key] = source[key]; } } } return target; }; //
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+
+var _vuex = __webpack_require__(1);
 
 exports.default = {
-    state: state,
-    getters: getters,
-    mutations: mutations,
-    actions: actions
+    data: function data() {
+        return {
+            editableSteps: [],
+            stepAdding: {
+                id: '',
+                body: '',
+                order: '',
+                image: {}
+            },
+            isAdding: false
+        };
+    },
+    created: function created() {
+        this.editableSteps = this.steps;
+    },
+
+    props: {
+        'recipeId': '',
+        'steps': ''
+    },
+    methods: _extends({}, (0, _vuex.mapActions)(['createStep', 'syncActiveRecipeChanges']), {
+        addNewStep: function addNewStep() {
+            this.isAdding = true;
+        },
+        cancelStepAdd: function cancelStepAdd() {
+            this.stepAdding = { body: '', order: '', image: {} };
+            this.isAdding = false;
+        },
+
+        /**
+         * Save new step and force update of editableSteps data
+         */
+        saveNewStep: function saveNewStep() {
+            var _this = this;
+
+            this.stepAdding.id = this.recipeId;
+            this.createStep(this.stepAdding).then(function (data) {
+                _this.syncActiveRecipeChanges(data).then(function () {
+                    _this.editableSteps = _this.steps;
+                    _this.isAdding = false;
+                    _this.stepAdding = { body: '', order: '' };
+                });
+            });
+        },
+        updateImage: function updateImage(evt) {
+            this.stepAdding.image = evt.target.files[0];
+        }
+    })
 };
+
+/***/ }),
+/* 59 */
+/***/ (function(module, exports, __webpack_require__) {
+
+var render = function() {
+  var _vm = this
+  var _h = _vm.$createElement
+  var _c = _vm._self._c || _h
+  return _c(
+    "v-container",
+    { staticClass: "pr-2 pl-2", attrs: { fluid: "" } },
+    [
+      _c(
+        "v-layout",
+        [
+          _c(
+            "v-flex",
+            { attrs: { xs12: "", sm10: "", "offset-sm1": "" } },
+            [
+              _vm._v(
+                "\n            hello from the inside " +
+                  _vm._s(_vm.recipeId) +
+                  "\n            "
+              ),
+              _c(
+                "ul",
+                _vm._l(_vm.editableSteps, function(step) {
+                  return _c("li", { key: step.id }, [
+                    _vm._v(
+                      "\n                    step body: " +
+                        _vm._s(step.body) +
+                        "\n                "
+                    )
+                  ])
+                })
+              ),
+              _vm._v(" "),
+              _c(
+                "v-btn",
+                {
+                  directives: [
+                    {
+                      name: "show",
+                      rawName: "v-show",
+                      value: !_vm.isAdding,
+                      expression: "!isAdding"
+                    }
+                  ],
+                  attrs: { outline: "" },
+                  on: { click: _vm.addNewStep }
+                },
+                [_vm._v("Add New Step")]
+              ),
+              _vm._v(" "),
+              _c(
+                "v-form",
+                {
+                  directives: [
+                    {
+                      name: "show",
+                      rawName: "v-show",
+                      value: _vm.isAdding,
+                      expression: "isAdding"
+                    }
+                  ]
+                },
+                [
+                  _c(
+                    "div",
+                    { staticClass: "headline grey--text text--darken-1" },
+                    [_vm._v("Add New Step")]
+                  ),
+                  _vm._v(" "),
+                  _c(
+                    "v-container",
+                    { attrs: { "grid-list-md": "" } },
+                    [
+                      _c(
+                        "v-layout",
+                        { attrs: { row: "", wrap: "" } },
+                        [
+                          _c(
+                            "v-flex",
+                            { attrs: { xs12: "" } },
+                            [
+                              _c("v-text-field", {
+                                attrs: {
+                                  label: "Step Details",
+                                  "multi-line": "",
+                                  required: ""
+                                },
+                                model: {
+                                  value: _vm.stepAdding.body,
+                                  callback: function($$v) {
+                                    _vm.stepAdding.body = $$v
+                                  },
+                                  expression: "stepAdding.body"
+                                }
+                              })
+                            ],
+                            1
+                          ),
+                          _vm._v(" "),
+                          _c("v-flex", { attrs: { xs12: "" } }, [
+                            _c("div", { staticStyle: { display: "flex" } }, [
+                              _c("input", {
+                                staticStyle: { flex: "1" },
+                                attrs: { type: "file", name: "image" },
+                                on: { change: _vm.updateImage }
+                              })
+                            ])
+                          ]),
+                          _vm._v(" "),
+                          _c(
+                            "v-btn",
+                            {
+                              attrs: { outline: "" },
+                              on: { click: _vm.cancelStepAdd }
+                            },
+                            [_vm._v("Cancel")]
+                          ),
+                          _vm._v(" "),
+                          _c(
+                            "v-btn",
+                            {
+                              attrs: { outline: "" },
+                              on: { click: _vm.saveNewStep }
+                            },
+                            [_vm._v("Save")]
+                          )
+                        ],
+                        1
+                      )
+                    ],
+                    1
+                  )
+                ],
+                1
+              )
+            ],
+            1
+          )
+        ],
+        1
+      )
+    ],
+    1
+  )
+}
+var staticRenderFns = []
+render._withStripped = true
+module.exports = { render: render, staticRenderFns: staticRenderFns }
+if (false) {
+  module.hot.accept()
+  if (module.hot.data) {
+     require("vue-hot-reload-api").rerender("data-v-69e53992", module.exports)
+  }
+}
+
+/***/ }),
+/* 60 */
+/***/ (function(module, exports) {
+
+// removed by extract-text-webpack-plugin
 
 /***/ })
 /******/ ]);

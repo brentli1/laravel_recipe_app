@@ -22,4 +22,6 @@ Route::group(['middleware' => ['auth:api']], function () {
 	Route::post('/recipe/edit/{id}', 'RecipeController@update');
 
 	Route::get('/categories', 'CategoryController@getCategories');
+
+	Route::post('/steps/new/{id}', 'StepController@create');
 });

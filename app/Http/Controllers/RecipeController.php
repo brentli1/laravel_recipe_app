@@ -5,9 +5,12 @@ namespace App\Http\Controllers;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Storage;
+use Illuminate\Support\Facades\DB;
 use App\Recipe;
 use App\Image;
+use App\Category;
 use App\Http\Resources\Recipe as RecipeResource;
+use App\Traits\SaveImageTrait;
 
 /**
  * Recipe Controller
@@ -16,6 +19,8 @@ use App\Http\Resources\Recipe as RecipeResource;
  */
 class RecipeController extends Controller
 {
+    use SaveImageTrait;
+
     /**
      * Get all recipes matching current user ID
      * 
@@ -56,6 +61,14 @@ class RecipeController extends Controller
         Auth::User()->recipes()->save($recipe);
         $recipe->save();
 
+        // Sync the categories in the request to the recipe 
+        $recipe->categories()->sync(array_column(json_decode($request->categories), 'id'));
+
+        if ($request->hasFile('image')) {
+            $this->saveImage($recipe, $request->image);
+            $recipe->load('image');
+        }
+        
         return new RecipeResource($recipe);
     }
 
@@ -77,33 +90,14 @@ class RecipeController extends Controller
         $recipe->cook_time = $request->cook_time;
         $recipe->save();
 
+        // Sync the categories in the request to the recipe 
+        $recipe->categories()->sync(array_column(json_decode($request->categories), 'id'));
+        
         if ($request->hasFile('image')) {
             $this->saveImage($recipe, $request->image);
             $recipe->load('image');
         }
-    
+        
         return new RecipeResource($recipe);
-    }
-
-    /**
-     * Save image for recipe
-     * 
-     * @param App\Recipe $recipe The recipe
-     * @param App\Image $image The image for the recipe
-     * @return void
-     */
-    public function saveImage($recipe, $image) {
-        $img = count($recipe->image) == 0 ? new Image() : Image::find($recipe->image[0]->id);
-        $image_path = $image->store('recipes');
-
-        $img->path = $image_path;
-        $img->name = $image->getClientOriginalName();
-        $img->save();
-
-        if (count($recipe->image) !== 0) {
-            Storage::delete($recipe->image[0]->path);
-        } else {
-            $recipe->image()->attach($img);
-        }
     }
 }
